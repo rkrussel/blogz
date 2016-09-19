@@ -21,7 +21,9 @@ class BlogHandler(webapp2.RequestHandler):
         """
 
         # TODO - filter the query so that only posts by the given user
-        return None
+        query2 = Post.all().order("-created").filter('author', user)
+
+        return query2.fetch(limit=limit, offset=offset)
 
     def get_user_by_name(self, username):
         """ Get a user object from the db, based on their username """
@@ -81,6 +83,7 @@ class BlogIndexHandler(BlogHandler):
         page = self.request.get("page")
         offset = 0
         page = page and int(page)
+
         if page:
             offset = (int(page) - 1) * self.page_size
         else:
@@ -111,7 +114,8 @@ class BlogIndexHandler(BlogHandler):
                     page=page,
                     page_size=self.page_size,
                     prev_page=prev_page,
-                    next_page=next_page)
+                    next_page=next_page,
+                    username=username)
         self.response.out.write(response)
 
 class NewPostHandler(BlogHandler):
@@ -287,7 +291,9 @@ class LogoutHandler(BlogHandler):
 
     def get(self):
         self.logout_user()
-        self.redirect('/blog')
+        t = jinja_env.get_template("logout.html")
+        response = t.render()
+        self.response.write(response)
 
 app = webapp2.WSGIApplication([
     ('/', IndexHandler),
